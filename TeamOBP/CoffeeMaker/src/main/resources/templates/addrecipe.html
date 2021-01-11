@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>CoffeeMaker - Add Recipe</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<link rel="stylesheet" href="css/bootstrap.css" />
+		<link rel="stylesheet" href="css/app.css" />
+		<style>
+			.plus-minus {
+				background-color: white;
+				color: black;
+			}
+		</style>
+	</head>
+	<body>
+		<div layout:fragment="content">
+			<script
+				src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+			<script>
+				var app = angular.module('myApp', []);
+				
+				app.controller('addRecipeCtrl', function($scope, $http, $q) {
+					$scope.reset = function() {
+						$scope.recipe = {
+							name : '',
+							price : '',
+							ingredients : []
+						};
+						if (undefined != $scope.addRecipeForm) {
+							$scope.addRecipeForm.$setPristine(); // reset Form
+						}
+					}
+					
+					$scope.allIngredients = [];
+					
+					$scope.ingredientsSelected = [];
+					
+					$http.get("/api/v1/ingredients").then(function(response) {
+						console.log(response.data);
+						$scope.allIngredients = response.data;
+					});
+					$scope.submit = function() {
+						$scope.addRecipe();
+						if ($scope.success) {
+							$scope.reset();
+						}
+					}
+					
+					$scope.recipe = {};
+					$scope.recipe.ingredients = [];
+					
+					$scope.addIngredientClick = function() {
+						$scope.recipe.ingredients.push({'ingredient': {'name': ''}, 'amount': ''});
+					}
+					$scope.addRecipe = function() {
+						$scope.success = false;
+						$scope.failure = false;
+						if ($scope.recipe.ingredients.length == 0) {
+							$scope.failure = true;
+						} else {
+							$http.post("/api/v1/recipes", $scope.recipe).then(
+									function(success) {
+										$scope.success = true;
+										$scope.failure = false;
+									}, function(rejection) {
+										//
+										console.log($scope.recipe);
+										console.error("Error while adding recipe");
+										$scope.success = false;
+										$scope.failure = true;
+									});
+						}
+					}
+					$scope.reset();
+				});
+			</script>
+			<div ng-app="myApp" class="generic-container ng-cloak" ng-controller="addRecipeCtrl as ctrl">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<span class="lead">Add a Recipe</span>
+					</div>
+	
+					<div class="formcontainer">
+						<form ng-submit="submit()" name="addRecipeForm">
+							<div class="row">
+								<div class="form-group col-md-12">
+									<label class="col-md-2 control-lable" for="file">Name</label>
+									<div class="col-md-7">
+										<input type="text" ng-model="recipe.name" name="name"
+											class="name form-control input-sm"
+											placeholder="Enter recipe name" required="0" />
+										<div class="has-error" ng-show="addRecipeForm.$dirty">
+											<span ng-show="addRecipeForm.name.$error.required">This
+												is a required field</span> <span
+												ng-show="addRecipeForm.name.$invalid">This field is
+												invalid </span>
+										</div>
+									</div>
+								</div>
+							</div>
+	
+							<div class="row">
+								<div class="form-group col-md-12">
+									<label class="col-md-2 control-lable" for="file">Price</label>
+									<div class="col-md-7">
+										<input type="text" ng-model="recipe.price" name="price"
+											class="price form-control input-sm"
+											placeholder="Enter recipe price" required="0" />
+										<div class="has-error" ng-show="addRecipeForm.$dirty">
+											<span ng-show="addRecipeForm.price.$error.required">This
+												is a required field</span> <span
+												ng-show="addRecipeForm.price.$error.min">Minimum
+												amount is 0</span> <span ng-show="addRecipeForm.price.$invalid">This
+												field is invalid </span>
+										</div>
+									</div>
+								</div>
+							</div>
+	
+							<div ng-repeat="recipeIng in recipe.ingredients track by $index" class="row">
+								
+								<div class="form-group col-md-12">
+									<select 
+										name="ingredient" ng-model="recipe.ingredients[$index].ingredient.name" class="col-md-2 control-lable">
+										<option ng-repeat="ing in allIngredients" value="{{ing.ingredient.name}}">{{ing.ingredient.name}}</option>
+									</select>
+									<div class="col-md-7">
+										<input type="text" placeholder="Enter ingredient amount" name="ingredient{{$index}}"
+											ng-model="recipe.ingredients[$index].amount" required="0" class="form-control input-sm" />
+										<div class="has-error" ng-show="addRecipeForm.$dirty">
+											<span ng-show="addRecipeForm.ingredient{{$index}}.$error.required">This
+												is a required field</span> <span
+												ng-show="addRecipeForm.ingredient{{$index}}.$error.min">Minimum
+												amount is 0</span> <span ng-show="addRecipeForm.ingredient{{$index}}.$invalid">This
+												field is invalid </span>
+										</div>
+									</div>
+									<div class="form-actions">
+										<button type="remove-ingredient" ng-click="recipe.ingredients.splice($index, 1)"
+											class="btn btn-primary btn-sm plus-minus">-</button>
+									</div>
+								</div>
+							</div>
+	
+							<div class="row">
+								<div class="form-actions">
+									<button type="add-ingredient" class="btn btn-primary btn-sm plus-minus"
+										ng-click="addIngredientClick()" ng-disabled="recipe.ingredients.length==allIngredients.length" style="margin-left: 18px">+</button>
+								</div>
+							</div>
+	
+							<div class="row">
+								<div class="form-actions floatRight">
+									<input type="submit" value="Submit"
+										class="btn btn-primary btn-sm"
+										ng-disabled="addRecipeForm.$invalid" />
+									<button type="button" ng-click="reset()"
+										class="btn btn-warning btn-sm"
+										ng-disabled="addRecipeForm.$pristine">Reset Form</button>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div ng-show="success">Recipe Created</div>
+					<div ng-show="failure">Error while adding recipe.</div>
+				</div>
+				<a href="/index">Home</a>
+			</div>
+		</div>
+	</body>
+</html>

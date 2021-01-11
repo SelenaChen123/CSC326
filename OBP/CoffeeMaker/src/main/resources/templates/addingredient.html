@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>CoffeeMaker - Add Ingredient</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" href="css/bootstrap.css" />
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+	<script
+		src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+	<script>
+		var app = angular.module('myApp', []);
+
+		app.controller('addIngredientCtrl', function($scope, $http, $q) {
+			$scope.reset = function() {
+				$scope.ingredient = {
+					ingredient : '',
+					amount : ''
+				};
+				if (undefined != $scope.addIngredientForm) {
+					$scope.addIngredientForm.$setPristine(); // reset Form
+				}
+			}
+
+			$scope.submit = function() {
+				$scope.addIngredient();
+				if ($scope.success) {
+					$scope.reset();
+				}
+			}
+
+			$scope.addIngredient = function() {
+				$scope.success = false;
+				$scope.failure = false;
+				$http.post("/api/v1/ingredients", $scope.ingredient).then(
+						function(success) {
+							console.log(success);
+							$scope.success = true;
+							$scope.failure = false;
+							$http.get("/api/v1/inventory")
+						}, function(rejection) {
+							console.error("Error while adding ingredient");
+							$scope.success = false;
+							$scope.failure = true;
+						});
+			}
+			$scope.reset();
+		});
+	</script>
+	<div ng-app="myApp" class="generic-container ng-cloak"
+		ng-controller="addIngredientCtrl as ctrl">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<span class="lead">Add an Ingredient</span>
+			</div>
+			<div class="formcontainer">
+				<form ng-submit="submit()" name="addIngredientForm">
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Name</label>
+							<div class="col-md-7">
+								<input type="text" ng-model="ingredient.ingredient" name="name"
+									placeholder="Enter ingredient name" required="0"
+									class="form-control input-sm" />
+								<div class="has-error" ng-show="addIngredientForm.$dirty">
+									<span ng-show="addIngredientForm.name.$error.required">This
+										is a required field</span> <span
+										ng-show="addIngredientForm.name.$invalid">This field is
+										invalid </span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Initial
+								Amount</label>
+							<div class="col-md-7">
+								<input type="text" ng-model="ingredient.amount"
+									placeholder="Enter initial amount" required="0" name="amount"
+									class="form-control input-sm" />
+								<div class="has-error" ng-show="addIngredientForm.$dirty">
+									<span ng-show="addIngredientForm.amount.$error.required">This
+										is a required field</span> <span
+										ng-show="addIngredientForm.amount.$invalid">This field
+										is invalid </span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-actions floatRight">
+							<input type="submit" value="Submit"
+								class="btn btn-primary btn-sm"
+								ng-disabled="addIngredientForm.$invalid" />
+							<button type="button" ng-click="reset()"
+								class="btn btn-warning btn-sm"
+								ng-disabled="addIngredientForm.$pristine">Reset Form</button>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div ng-show="success">Ingredient added successfully.</div>
+			<div ng-show="failure">Error while creating ingredient.</div>
+		</div>
+		<a href="/index">Home</a>
+	</div>
+</body>
+</html>

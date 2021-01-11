@@ -1,0 +1,109 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Record Prescriptions</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th:inline="javascript">
+	    /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+	    /*<![CDATA[*/
+	    var app = angular.module("recordPrescriptionsApp", []);
+	    app.controller("recordPrescriptionsCtrl", function($scope, $http) {
+	    	$scope.prescriptions = [];
+	    	
+			function reset(){
+				$scope.pharmacistAssigned = true;
+				$http.get("/iTrust2/api/v1/curPharmacist").then(function(response) {
+					$scope.pharmacist = response.data;
+					if ($scope.pharmacist.pharmacyId === undefined) {
+						$scope.pharmacistAssigned = false;
+					} else {
+						$http.get("/iTrust2/api/v1/filledPrescriptions/" + $scope.pharmacist.pharmacyId).then(function(pharmacyResponse) {
+							var humanize = {"GENERIC": "Generic", "BRAND_NAME": "Brand Name"};
+							$scope.prescriptions = pharmacyResponse.data;
+							for (var i = 0; i < $scope.prescriptions.length; i++) {
+								$scope.prescriptions[i].type = humanize[$scope.prescriptions[i].type];
+							}
+						});
+					}
+				});
+			}
+			reset();
+			
+			$scope.selectedPrescription = null;
+			
+			$scope.selectPrescription = function(prescription) {
+				$scope.selectedPrescription = prescription;
+				$scope.displaySuccess = false;
+				$scope.displayError = false;
+			}
+			
+			$scope.colorButton = function(prescription) {
+				return {"background-color": prescription === $scope.selectedPrescription ? "green" : "#f5f5f5"};
+			}
+			
+			$scope.submit = function() {
+				if ($scope.selectedPrescription != null) {
+					$http.post("/iTrust2/api/v1/pickedUpPrescriptions/" + $scope.selectedPrescription.id).then(
+			    		function(response) {
+			    		    $scope.displaySuccess = true;
+			    		    $scope.displayFailure = false;
+			    		    reset();
+			    		}, function(rejection) {
+			    		    $scope.displayFailure = true;
+			    		    $scope.displaySuccess = false;
+			    		});
+				}
+			}
+	    });
+	    /*]]>*/
+		</script>
+
+		<div ng-app="recordPrescriptionsApp"
+			ng-controller="recordPrescriptionsCtrl">
+			<div
+				style="float: left; width: 80%; border-left: 1px solid #bbb; padding-left: 3%; height: 100%; overflow-y: auto">
+				<h2 id="header0">Record Prescriptions</h2>
+
+				<p ng-if="!pharmacistAssigned">You have not been yet assigned to
+					a pharmacy.</p>
+				<p ng-if="pharmacistAssigned && prescriptions.length == 0">There
+					are no filled prescriptions to record.</p>
+				<div ng-if="pharmacistAssigned && prescriptions.length != 0">
+					<table class="table table-bordered">
+						<tr>
+							<th>Drug</th>
+							<th>Dosage (mg)</th>
+							<th>Desired Type</th>
+							<th>Start Date</th>
+							<th>End Date</th>
+							<th>Renewals</th>
+							<th>Select</th>
+						</tr>
+						<tr ng-repeat="presc in prescriptions">
+							<td>{{presc.drug.name}}</td>
+							<td>{{presc.dosage}}</td>
+							<td>{{presc.type}}</td>
+							<td>{{presc.startDate}}</td>
+							<td>{{presc.endDate}}</td>
+							<td>{{presc.renewals}}</td>
+							<td><button ng-click="selectPrescription(presc)"
+									ng-style="colorButton(presc)" class="btn" name="select">Select</button></td>
+						</tr>
+					</table>
+
+					<br />
+					<button ng-click="submit()" class="btn" name="submit">Submit</button>
+
+				</div>
+				
+				<div ng-if="displaySuccess" name="success" style="color: green;">Successfully
+						recorded that the patient has picked up their prescription</div>
+				<div ng-if="displayFailure" name="failure" style="color: red;">Unable
+						to record prescription as being picked up</div>
+			</div>
+		</div>
+
+	</div>
+</body>
+</html>

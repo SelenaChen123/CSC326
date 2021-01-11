@@ -1,0 +1,449 @@
+From 0318e54530ec8c8ce6eec1065f38683969cf5c62 Mon Sep 17 00:00:00 2001
+From: Kai Presler-Marshall <kpresle@ncsu.edu>
+Date: Mon, 10 Aug 2020 20:50:34 -0400
+Subject: [PATCH] Add tests for catching bugs
+
+---
+ .../src/main/resources/templates/makecoffee.html   |   7 +-
+ .../ncsu/csc/coffee_maker/controllers/APITest.java |  25 +++++
+ .../csc/coffee_maker/controllers/TestUtils.java    |  27 ++++++
+ .../models/persistent/InventoryTest.java           |  34 +++++++
+ .../edu/ncsu/csc/selenium/DeleteRecipeTest.java    | 104 +++++++++++++++++++++
+ .../java/edu/ncsu/csc/selenium/MakeCoffeeTest.java |  74 ++++++++++++---
+ .../src/test/resources/basic/MakeCoffee.feature    |  45 +++++++++
+ 7 files changed, 299 insertions(+), 17 deletions(-)
+ create mode 100644 CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/TestUtils.java
+ create mode 100644 CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/models/persistent/InventoryTest.java
+ create mode 100644 CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/DeleteRecipeTest.java
+ create mode 100644 CoffeeMaker/src/test/resources/basic/MakeCoffee.feature
+
+diff --git a/CoffeeMaker/src/main/resources/templates/makecoffee.html b/CoffeeMaker/src/main/resources/templates/makecoffee.html
+index d448c44..ca50ae3 100644
+--- a/CoffeeMaker/src/main/resources/templates/makecoffee.html
++++ b/CoffeeMaker/src/main/resources/templates/makecoffee.html
+@@ -53,10 +53,11 @@
+ 				ng-model="amtPaid" name="amtPaid" required="true" /> <input
+ 				type="submit" ng-click="make()" value="Make Coffee" /> <br />
+ 
+-			<div ng-show="submissionSuccess">Coffee was made. Your change
+-				is {{change}}.</div>
++			<div ng-show="submissionSuccess" class="success">Coffee was
++				made. Your change is {{change}}.</div>
+ 
+-			<div ng-show="submissionFailure">An error occurred: {{error}}</div>
++			<div ng-show="submissionFailure" class="failure">An error
++				occurred: {{error}}</div>
+ 
+ 			<br /> <a href="/index">Home</a>
+ 		</div>
+diff --git a/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/APITest.java b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/APITest.java
+index 2fd153f..e3eb61d 100644
+--- a/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/APITest.java
++++ b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/APITest.java
+@@ -1,6 +1,8 @@
+ package edu.ncsu.csc.coffee_maker.controllers;
+ 
++import static org.junit.Assert.assertEquals;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+ 
+ import org.junit.Before;
+@@ -9,11 +11,14 @@ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+ import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.http.MediaType;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+ import org.springframework.web.context.WebApplicationContext;
+ 
++import edu.ncsu.csc.coffee_maker.models.persistent.Recipe;
++
+ /**
+  * Perform a quick check of one of the API methods to ensure that the API
+  * controller is up and receiving requests as it should be
+@@ -58,4 +63,24 @@ public class APITest {
+         mvc.perform( get( "/api/v1/inventory" ) ).andExpect( status().isOk() );
+     }
+ 
++    @Test
++    public void testRecipeApi () throws Exception {
++        Recipe.deleteAll( Recipe.class );
++
++        final Recipe recipe = new Recipe();
++        recipe.setName( "Delicious Not-Coffee" );
++        recipe.setChocolate( 10 );
++        recipe.setMilk( 20 );
++        recipe.setSugar( 5 );
++        recipe.setCoffee( 1 );
++
++        recipe.setPrice( 5 );
++
++        mvc.perform( post( "/api/v1/recipes" ).contentType( MediaType.APPLICATION_JSON )
++                .content( TestUtils.asJsonString( recipe ) ) );
++
++        assertEquals( 1, Recipe.getAll().size() );
++
++    }
++
+ }
+diff --git a/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/TestUtils.java b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/TestUtils.java
+new file mode 100644
+index 0000000..283d374
+--- /dev/null
++++ b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/controllers/TestUtils.java
+@@ -0,0 +1,27 @@
++package edu.ncsu.csc.coffee_maker.controllers;
++
++import com.google.gson.Gson;
++
++/**
++ * Class for handy utils shared across all of the API tests
++ *
++ * @author Kai Presler-Marshall
++ *
++ */
++public class TestUtils {
++
++    private static Gson gson = new Gson();
++
++    /**
++     * Uses Google's GSON parser to serialize a Java object to JSON. Useful for
++     * creating JSON representations of our objects when calling API methods.
++     *
++     * @param obj
++     *            to serialize to JSON
++     * @return JSON string associated with object
++     */
++    public static String asJsonString ( final Object obj ) {
++        return gson.toJson( obj );
++    }
++
++}
+diff --git a/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/models/persistent/InventoryTest.java b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/models/persistent/InventoryTest.java
+new file mode 100644
+index 0000000..1620c4b
+--- /dev/null
++++ b/CoffeeMaker/src/test/java/edu/ncsu/csc/coffee_maker/models/persistent/InventoryTest.java
+@@ -0,0 +1,34 @@
++package edu.ncsu.csc.coffee_maker.models.persistent;
++
++import static org.junit.Assert.assertEquals;
++
++import org.junit.Test;
++
++public class InventoryTest {
++
++    @Test
++    public void testConsumeInventory () {
++        final Inventory i = new Inventory( 500, 500, 500, 500 );
++
++        final Recipe recipe = new Recipe();
++        recipe.setName( "Delicious Not-Coffee" );
++        recipe.setChocolate( 10 );
++        recipe.setMilk( 20 );
++        recipe.setSugar( 5 );
++        recipe.setCoffee( 1 );
++
++        recipe.setPrice( 5 );
++
++        i.useIngredients( recipe );
++
++        /*
++         * Make sure that all of the inventory fields are now properly updated
++         */
++
++        assertEquals( 490, i.getChocolate() );
++        assertEquals( 480, i.getMilk() );
++        assertEquals( 495, i.getSugar() );
++        assertEquals( 499, i.getCoffee() );
++    }
++
++}
+diff --git a/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/DeleteRecipeTest.java b/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/DeleteRecipeTest.java
+new file mode 100644
+index 0000000..7c07220
+--- /dev/null
++++ b/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/DeleteRecipeTest.java
+@@ -0,0 +1,104 @@
++package edu.ncsu.csc.selenium;
++
++import java.util.concurrent.TimeUnit;
++
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++import org.openqa.selenium.By;
++
++/**
++ * Tests Delete Recipe functionality.
++ *
++ * @author Kai Presler-Marshall (kpresle@ncsu.edu)
++ * @author Elizabeth Gilbert (evgilber@ncsu.edu)
++ */
++
++public class DeleteRecipeTest extends SeleniumTest {
++
++    /** The URL for CoffeeMaker - change as needed */
++    private String             baseUrl;
++    private final StringBuffer verificationErrors = new StringBuffer();
++
++    private String             recipeName;
++
++    @Override
++    @Before
++    protected void setUp () throws Exception {
++        super.setUp();
++
++        recipeName = "CoffeeRecipe";
++        baseUrl = "http://localhost:8080";
++        driver.manage().timeouts().implicitlyWait( 10, TimeUnit.SECONDS );
++
++    }
++
++    /**
++     * Test to delete an existing, valid recipe. Expect to get a valid success
++     * message stating the recipe was deleted.
++     *
++     * @throws Exception
++     */
++    @Test
++    public void testDeleteRecipe1 () throws Exception {
++        add();
++        delete();
++    }
++
++    /**
++     * Tests deleting a recipe.
++     *
++     * @throws Exception
++     */
++    public void delete () throws Exception {
++        waitForAngular();
++        driver.get( baseUrl + "" );
++        driver.findElement( By.linkText( "Delete Recipe" ) ).click();
++
++        // Select the recipe to delete and delete it.
++        driver.findElement( By.cssSelector( "input[type=\"radio\"]" ) ).click();
++        driver.findElement( By.cssSelector( "input[type=\"submit\"]" ) ).click();
++        assertTextPresent( "Recipe deleted successfully", driver );
++
++        driver.findElement( By.linkText( "Home" ) ).click();
++    }
++
++    /**
++     * Tests adding a recipe to delete.
++     *
++     * @throws Exception
++     */
++    public void add () throws Exception {
++        driver.get( baseUrl + "" );
++        driver.findElement( By.linkText( "Add a Recipe" ) ).click();
++
++        // Enter the recipe information
++        driver.findElement( By.name( "name" ) ).clear();
++        driver.findElement( By.name( "name" ) ).sendKeys( recipeName );
++        driver.findElement( By.name( "price" ) ).clear();
++        driver.findElement( By.name( "price" ) ).sendKeys( "50" );
++        driver.findElement( By.name( "coffee" ) ).clear();
++        driver.findElement( By.name( "coffee" ) ).sendKeys( "2" );
++        driver.findElement( By.name( "milk" ) ).clear();
++        driver.findElement( By.name( "milk" ) ).sendKeys( "1" );
++        driver.findElement( By.name( "sugar" ) ).clear();
++        driver.findElement( By.name( "sugar" ) ).sendKeys( "1" );
++        driver.findElement( By.name( "chocolate" ) ).clear();
++        driver.findElement( By.name( "chocolate" ) ).sendKeys( "0" );
++        // Submit the recipe.
++        driver.findElement( By.cssSelector( "input[type=\"submit\"]" ) ).click();
++
++        // Make sure the proper message was displayed.
++        assertTextPresent( "Recipe Created", driver );
++    }
++
++    @Override
++    @After
++    public void tearDown () {
++        final String verificationErrorString = verificationErrors.toString();
++        if ( !"".equals( verificationErrorString ) ) {
++            fail( verificationErrorString );
++        }
++    }
++
++}
+diff --git a/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/MakeCoffeeTest.java b/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/MakeCoffeeTest.java
+index d522eb3..bbebd2a 100644
+--- a/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/MakeCoffeeTest.java
++++ b/CoffeeMaker/src/test/java/edu/ncsu/csc/selenium/MakeCoffeeTest.java
+@@ -35,7 +35,7 @@ public class MakeCoffeeTest extends SeleniumTest {
+         ivt.save();
+ 
+         super.setUp();
+-        baseUrl = "http://localhost:8080";
++        baseUrl = "http://localhost:8080/";
+         driver.manage().timeouts().implicitlyWait( 20, TimeUnit.SECONDS );
+ 
+     }
+@@ -64,6 +64,8 @@ public class MakeCoffeeTest extends SeleniumTest {
+         recipe.setChocolate( amtChocolate );
+         recipe.save();
+ 
++        Thread.sleep( 2000 );
++
+     }
+ 
+     /**
+@@ -101,8 +103,8 @@ public class MakeCoffeeTest extends SeleniumTest {
+      *
+      */
+     private void makeCoffee ( final String recipeName, final int price, final int amtCoffee, final int amtMilk,
+-            final int amtSugar, final int amtChocolate, final int paid, final String expectedMessage )
+-            throws Exception {
++            final int amtSugar, final int amtChocolate, final int paid, final String expectedMessage,
++            final boolean success ) throws Exception {
+         createRecipe( recipeName, price, amtCoffee, amtMilk, amtSugar, amtChocolate );
+ 
+         driver.get( baseUrl + "" );
+@@ -126,8 +128,12 @@ public class MakeCoffeeTest extends SeleniumTest {
+         driver.findElement( By.cssSelector( "input[type=\"submit\"]" ) ).click();
+         Thread.sleep( 1000 );
+ 
+-        // Make sure the proper message was displayed.
+-        assertTextPresent( expectedMessage, driver );
++        final WebElement message = driver.findElement( By.className( success ? "success" : "failure" ) );
++
++        assertNotNull( message );
++
++        assertTrue( message.getText().contains( expectedMessage ) );
++
+     }
+ 
+     /**
+@@ -138,13 +144,13 @@ public class MakeCoffeeTest extends SeleniumTest {
+      */
+     @Test
+     public void testValidMakeCoffee () throws Exception {
+-        makeCoffee( "Coffee", 60, 0, 3, 7, 2, 60, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 0, 7, 2, 60, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 3, 0, 2, 60, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 3, 0, 2, 60, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 3, 7, 0, 60, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 3, 7, 2, 100, "Coffee was made" );
+-        makeCoffee( "Coffee", 60, 5, 3, 7, 2, 61, "Coffee was made" );
++        makeCoffee( "Coffee", 60, 0, 3, 7, 2, 60, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 0, 7, 2, 60, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 3, 0, 2, 60, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 3, 0, 2, 60, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 3, 7, 0, 60, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 3, 7, 2, 100, "Coffee was made", true );
++        makeCoffee( "Coffee", 60, 5, 3, 7, 2, 61, "Coffee was made", true );
+     }
+ 
+     /**
+@@ -155,8 +161,48 @@ public class MakeCoffeeTest extends SeleniumTest {
+      */
+     @Test
+     public void testInvalidMakeCoffee () throws Exception {
+-        makeCoffee( "Coffee", 60, 0, 3, 7, 2, 59, "Error while making recipe" );
+-        makeCoffee( "Coffee", 60, 5, 0, 7, 2, -1, "Error while making recipe" );
++        makeCoffee( "Coffee", 60, 0, 3, 7, 2, 59, "Error while making recipe", false );
++        makeCoffee( "Coffee", 60, 5, 0, 7, 2, -1, "Error while making recipe", false );
++    }
++
++    @Test
++    public void testMakeCoffeeChange () {
++
++        Recipe.deleteAll( Recipe.class );
++
++        Recipe toMake = Recipe.getByName( "Delicious Not-Coffee" );
++
++        if ( null != toMake ) {
++            toMake.delete();
++        }
++
++        toMake = new Recipe();
++        toMake.setName( "Delicious Not-Coffee" );
++        toMake.setChocolate( 10 );
++        toMake.setMilk( 20 );
++        toMake.setSugar( 5 );
++        toMake.setCoffee( 0 ); // not a chance!
++
++        toMake.setPrice( 5 );
++
++        toMake.save();
++        driver.get( baseUrl + "makecoffee.html" );
++
++        final WebElement radioButton = driver.findElement( By.cssSelector( "input[name='name']" ) );
++
++        radioButton.click();
++
++        final WebElement payment = driver.findElement( By.cssSelector( "input[name='amtPaid']" ) );
++
++        payment.sendKeys( "50" );
++
++        driver.findElement( By.cssSelector( "input[type=\"submit\"]" ) ).click();
++
++        final WebElement message = driver.findElement( By.className( "success" ) );
++
++        assertNotNull( message );
++
++        assertEquals( "Coffee was made. Your change is 45.", message.getText() );
+     }
+ 
+     @Override
+diff --git a/CoffeeMaker/src/test/resources/basic/MakeCoffee.feature b/CoffeeMaker/src/test/resources/basic/MakeCoffee.feature
+new file mode 100644
+index 0000000..4d1f049
+--- /dev/null
++++ b/CoffeeMaker/src/test/resources/basic/MakeCoffee.feature
+@@ -0,0 +1,45 @@
++#Author: Elizabeth Gilbert (evgilber)
++
++Feature: Make Coffee
++	As a customer
++	I want to be able to make coffee
++	So that I can speak politely with my colleagues in the morning
++	
++	
++	
++	
++Scenario Outline: Valid Make Coffee
++	Given the CoffeeMaker has <existingRecipes> Recipes
++	And <originalCoffee> coffee, <originalMilk> milk, <originalSugar> sugar, and <originalChocolate> chocolate currently in the CoffeeMaker
++	When I submit values for name: <recipeName>; cost: <price>; and ingredients: <amtCoffee> coffee, <amtMilk> milk, <amtSugar> sugar, <amtChocolate> chocolate
++	And I make coffee with the recipe for <recipeName> and input <money> money
++	Then the coffee is successfully made with correct change
++	And the inventory is updated correctly
++
++Examples:
++	| originalCoffee | originalMilk | originalSugar | originalChocolate | existingRecipes | recipeName | price | amtCoffee | amtMilk | amtSugar | amtChocolate | money |
++	| 15             | 15           | 15            | 15                | 0               | coffee     | 60    | 0         | 3       | 7        | 2            | 60    |
++	| 15             | 15           | 15            | 15                | 1               | coffee     | 60    | 5         | 0       | 7        | 2            | 60    |
++	| 15             | 15           | 15            | 15                | 2               | coffee     | 60    | 5         | 3       | 0        | 2            | 60    |
++	| 15             | 15           | 15            | 15                | 2               | coffee     | 60    | 5         | 3       | 7        | 0            | 60    |
++	| 15             | 15           | 15            | 15                | 0               | coffee     | 60    | 5         | 3       | 7        | 2            | 100   |
++	| 15             | 15           | 15            | 15                | 0               | coffee     | 60    | 5         | 3       | 7        | 2            | 61    |
++	| 6              | 4            | 8             | 3                 | 0               | coffee     | 60    | 5         | 3       | 7        | 2            | 60    |
++	| 5              | 3            | 7             | 2                 | 0               | coffee     | 60    | 5         | 3       | 7        | 2            | 60    |
++
++
++
++
++Scenario Outline: Invalid Make Coffee
++	Given the CoffeeMaker has <existingRecipes> Recipes
++	And <originalCoffee> coffee, <originalMilk> milk, <originalSugar> sugar, and <originalChocolate> chocolate currently in the CoffeeMaker
++	When I submit values for name: <recipeName>; cost: <price>; and ingredients: <amtCoffee> coffee, <amtMilk> milk, <amtSugar> sugar, <amtChocolate> chocolate
++	And I make coffee with the recipe for <recipeName> and input <money> money
++	Then the coffee maker returns your money
++	And the inventory is not changed
++
++Examples:
++	| originalCoffee | originalMilk | originalSugar | originalChocolate | existingRecipes | recipeName | price | amtCoffee | amtMilk | amtSugar | amtChocolate | money |
++	| 15             | 15           | 15            | 15                | 0               | coffee     | 60    | 5         | 3       | 7        | 2            | 59    |
++	| 15             | 15           | 15            | 15                | 1               | coffee     | 60    | 5         | 3       | 7        | 2            | -1    |
++	
+\ No newline at end of file
+-- 
+2.16.2.windows.1
+

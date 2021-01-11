@@ -1,0 +1,216 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Assign Pharmacist</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+			/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+			/*<![CDATA[*/
+			var app = angular.module("assignPharmacistApp", []);
+			app
+					.controller(
+							"assignPharmacistCtrl",
+							function($scope, $http) {
+
+								$scope.pharmacies = [];
+								$scope.pharmacists = [];
+
+								$scope.selectedPharmacy = "";
+								$scope.selectedPharmacist = "";
+
+								$scope.loadPharmacies = function() {
+									$http.get("/iTrust2/api/v1/pharmacies")
+											.then(
+													function(response) {
+														$scope.pharmacies = response.data;
+														console
+																.log(response.data);
+														$scope.message = "";
+													},
+													function(rejection) {
+														$scope.pharmacies = [];
+														$scope.message = "Could not display pharmacies";
+													});
+								}
+
+								$scope.loadPharmacists = function() {
+									$http.get("/iTrust2/api/v1/pharmacists")
+											.then(
+													function(response) {
+														$scope.pharmacists = response.data;
+														console
+																.log(response.data);
+														$scope.message = "";
+													},
+													function(rejection) {
+														$scope.pharmacists = [];
+														$scope.message = "Could not display pharmacists";
+													});
+								}
+
+								$scope.selectPharmacy = function(pharmacy) {
+									$scope.selectedPharmacy = pharmacy.name;
+									console.log($scope.selectedPharmacy);
+								}
+
+								$scope.selectPharmacist = function(pharmacist) {
+									$scope.selectedPharmacist = pharmacist.self.username;
+									console.log($scope.selectedPharmacist);
+								}
+								
+								$scope.changeColorPharmacy = function(pharmacy) {
+									if( pharmacy.name === $scope.selectedPharmacy ){
+										return {
+											"background-color": "green"
+										}
+									} else {
+										return {
+											"background-color": "#f5f5f5"
+										}
+									}
+								}
+								
+								$scope.changeColorPharmacist = function(pharmacist) {
+									if( pharmacist.self.username === $scope.selectedPharmacist ){
+										return {
+											"background-color": "green"
+										}
+									} else {
+										return {
+											"background-color": "#f5f5f5"
+										}
+									}
+								}
+
+								$scope.assignPharmacist = function() {
+									$http.post(
+													"/iTrust2/api/v1/assignPharmacist/"
+															+ $scope.selectedPharmacist,
+													$scope.selectedPharmacy)
+											.then(
+													function(response) {
+														$scope.loadPharmacies();
+														$scope.loadPharmacists();
+														$scope.message = "Pharmacist assigned successfully.";
+													},
+													function(rejection) {
+														$scope.message = "Problem assigning pharmacist";
+													});
+									
+									$scope.selectedPharmacy = "";
+									$scope.selectedPharmacist = "";
+									$scope.loadPharmacies();
+									$scope.loadPharmacists();
+								}
+
+								$scope.getTemplateOne = function(pharmacy) {
+									return 'view';
+								};
+
+								$scope.getTemplateTwo = function(pharmacist) {
+									return 'viewTwo';
+								}
+
+								$scope.loadPharmacies();
+								$scope.loadPharmacists();
+							});
+		</script>
+		<div ng-app="assignPharmacistApp" ng-controller="assignPharmacistCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Assign Pharmacist</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>Available Pharmacies:</caption>
+									<thead>
+										<tr>
+											<th>Pharmacy Name</th>
+											<th>Address</th>
+											<th>State</th>
+											<th>Zip Code</th>
+											<th>Select Pharmacy</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="locationTableRow"
+											ng-repeat="item in pharmacies | orderBy: 'name'"
+											ng-include=getTemplateOne(item) userId={{item.name}}>
+										</tr>
+									</tbody>
+								</table>
+								<!-- table in view mode -->
+								<script type="text/ng-template" id="view">
+                  console.log("test");
+                  <td name="nameCell">{{item.name}}</td>
+                  <td name="addressCell">{{item.address}}</td>
+                  <td name="stateCell">{{item.state}}</td>
+                  <td name="zipCell">{{item.zip}}</td>
+                  <td>
+                    <div class="row text-center">
+                      <div class="col-md-6">
+                          <input type="button" value="Select" class="btn btn-sm" id={{item.name}} name="selectPharmacy" ng-click="selectPharmacy(item)" ng-style="changeColorPharmacy(item)" />                          
+                      </div>
+                    </div>
+                  </td>
+                  /*]]>*/
+                </script>
+
+								<div class="row">
+									<div class="col-md-12">
+										<table class="table table-bordered">
+											<caption>Available Pharmacists:</caption>
+											<thead>
+												<tr>
+													<th>Pharmacist Name</th>
+													<th>Address</th>
+													<th>State</th>
+													<th>Zip Code</th>
+													<th>Assigned Pharmacy</th>
+													<th>Select Pharmacist</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr name="locationTableRow"
+													ng-repeat="item in pharmacists | orderBy: 'firstName'"
+													ng-include=getTemplateTwo(item) userId={{item.firstName}}>
+												</tr>
+											</tbody>
+										</table>
+										<!-- table in view mode -->
+										<script type="text/ng-template" id="viewTwo">
+                  console.log("test");
+                  <td name="nameCell">{{item.firstName + " " + item.lastName}}</td>
+                  <td name="addressCell">{{item.address1 + " " + item.address2}}</td>
+                  <td name="stateCell">{{item.state}}</td>
+                  <td name="zipCell">{{item.zip}}</td>
+				  <td name="assignmentCell">{{item.pharmacyId}}</td>
+                  <td>
+                    <div class="row text-center">
+                      <div class="col-md-6">
+                          <input type="button" value="Select" class="btn btn-sm" id = {{item.firstName}} name="selectPharmacist" ng-click="selectPharmacist(item)" ng-style="changeColorPharmacist(item)" />                          
+                      </div>
+                    </div>
+                  </td>
+                  /*]]>*/
+                </script>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-md-6">
+										<input type="button" value="Assign" class="btn btn-lg"
+											name="assignPharmacist" ng-click="assignPharmacist()" />
+										<div name="success" style="color: green;">{{message}}</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>View Prescriptions</title>
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+
+
+		<script th:inline="javascript">
+      /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+      /*<![CDATA[*/
+      var app = angular.module("prescriptionsApp", []);
+
+      app.controller('prescriptionsCtrl', function ($scope, $http) {
+
+    	$scope.patient = {};
+		$scope.defaultPrescriptionType = "";
+		$scope.defaultPharmacy = {};
+
+		$scope.pharmacyMessage = "";
+		$scope.pharmacyErrorMessage = "";
+
+		$scope.prescriptionMessage = "";
+		$scope.prescriptionErrorMessage = "";
+    	
+		/*Get curret patient*/
+		$http.get("/iTrust2/api/v1/patient").then(
+			function(response) {
+				$scope.patient = response.data;
+
+				if ($scope.patient.defaultPrescriptionType)
+					$scope.defaultPrescriptionType = response.data.defaultPrescriptionType === 'GENERIC' ? 'Generic' : 'Brand Name';
+				
+				if ($scope.patient.defaultPharmacy)
+					$scope.defaultPharmacy = response.data.defaultPharmacy.name;
+			}
+		);
+		
+		$scope.pharmacies = [];
+
+		/*Getting a list of pharmacies*/
+		$http.get("/iTrust2/api/v1/pharmacies").then(
+			function(response) {
+				$scope.pharmacies = response.data;
+			}
+		);
+
+		$scope.defaultsChanged = function() {
+			let typeChanged = false;
+			let pharmacyChanged = false;
+			
+			if ($scope.defaultPrescriptionType !== $scope.patient.defaultPrescriptionType) 
+				typeChanged = true;
+			
+			if ($scope.defaultPharmacy !== $scope.patient.defaultPharmacy)
+				pharmacyChanged = true;
+
+			return (typeChanged || pharmacyChanged);
+		}
+
+		$scope.submitDefaults = function() {
+			$scope.patient.defaultPrescriptionType = $scope.defaultPrescriptionType;
+			$scope.patient.defaultPharmacy = $scope.defaultPharmacy;
+
+			if ($scope.defaultPrescriptionType && $scope.defaultPharmacy) {
+				$http.put(`/iTrust2/api/v1/patients/${$scope.patient.self.username}/defaultPrescription`, $scope.defaultPrescriptionType).then(
+					function (response) {
+						$scope.prescriptionErrorMessage = "";
+						$scope.prescriptionMessage = "Patient's default prescription updated successfully";
+						$http.put(`/iTrust2/api/v1/patients/${$scope.patient.self.username}/defaultPharmacy`, $scope.defaultPharmacy).then(
+								function (response) {
+									$scope.pharmacyErrorMessage = "";
+									$scope.pharmacyMessage = "Patient's default pharmacy updated successfully";
+								},
+								function (rejection) {
+									$scope.pharmacyMessage = "";
+									$scope.pharmacyErrorMessage = "Patient's default pharmacy failed to update";
+								}
+							);
+					},
+					function (rejection) {
+						$scope.prescriptionMessage = "";
+						$scope.prescriptionErrorMessage = "Patient's default prescription failed to update";
+					}
+				);
+			} else if ($scope.defaultPrescriptionType) {
+				$http.put(`/iTrust2/api/v1/patients/${$scope.patient.self.username}/defaultPrescription`, $scope.defaultPrescriptionType).then(
+						function (response) {
+							$scope.prescriptionErrorMessage = "";
+							$scope.prescriptionMessage = "Patient's default prescription updated successfully";
+						},
+						function (rejection) {
+							$scope.prescriptionMessage = "";
+							$scope.prescriptionErrorMessage = "Patient's default prescription failed to update";
+						}
+					);
+			} else if ($scope.defaultPharmacy) {
+				$http.put(`/iTrust2/api/v1/patients/${$scope.patient.self.username}/defaultPharmacy`, $scope.defaultPharmacy).then(
+						function (response) {
+							$scope.pharmacyErrorMessage = "";
+							$scope.pharmacyMessage = "Patient's default pharmacy updated successfully";
+						},
+						function (rejection) {
+							$scope.pharmacyMessage = "";
+							$scope.pharmacyErrorMessage = "Patient's default pharmacy failed to update";
+						}
+					);
+			}
+		}
+
+        $scope.prescriptions = [];
+        $scope.pattern = /^\d{4}-\d{4}-\d{2}$/;
+        $scope.loadTable = function () {
+          $http.get("/iTrust2/api/v1/prescriptions").then(
+            function (response) {
+              $scope.prescriptions = response.data;
+              $scope.message = "";
+            }, function (rejection) {
+              $scope.prescriptions = [];
+              $scope.message = "Could not display prescriptions";
+            });
+        }
+        $scope.convertTypeName = {
+        	"GENERIC": "Generic",
+        	"BRAND_NAME": "Brand Name"
+        }
+        $scope.loadTable();
+      });
+			/*]]>*/
+    </script>
+
+		<div ng-app="prescriptionsApp" ng-controller="prescriptionsCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Patient Prescription Defaults</h3>
+							</div>
+							<div class="panel-body">
+								<div class="row">
+									<div class="form-group col-xs-6">
+										<label>My Default Prescription Type:</label>
+									</div>
+									<div class="col-xs-6">	
+										<select class="form-control" ng-init="defaultPrescriptionType = patient.defaultPrescriptionType" ng-model="defaultPrescriptionType" name="prescriptionTypeEntry">
+											<option value="Generic">Generic</option>
+											<option value="Brand Name">Brand Name</option>
+										</select>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-xs-6">
+										<label>My Default Pharmacy:</label>
+									</div>
+									<div class="col-xs-6">
+										<select class="form-control" ng-init="defaultPharmacy = patient.defaultPharmacy" ng-model="defaultPharmacy" name="pharmacyEntry" ng-options="pharmacy.name as pharmacy.name for pharmacy in pharmacies">
+										</select>
+									</div>
+								</div>
+								<div class="form-group row text-center">
+									<button class="btn btn-success" ng-click="submitDefaults()" name="submitDefaults">Submit</button>
+								</div>
+								<div class="col-xs-12 text-right">
+									<div style="white-space: pre-line;">
+										<div name="defaultPrescriptionSuccess" class="text-success">{{prescriptionMessage}}</div>
+										<div name="defaultPrescriptionError" class="text-danger">{{prescriptionErrorMessage}}</div>
+									</div>
+								</div>
+								<div class="col-xs-12 text-right">
+									<div style="white-space: pre-line;">
+										<div name="defaultPharmacySuccess" class="text-success">{{pharmacyMessage}}</div>
+										<div name="defaultPharmacyError" class="text-danger">{{pharmacyErrorMessage}}</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Patient View Prescriptions</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>My Prescriptions:</caption>
+									<thead>
+										<tr>
+											<th>Drug</th>
+											<th>Dosage (mg)</th>
+											<th>Prescription Type</th>
+											<th>Pharmacy</th>
+											<th>Start Date</th>
+											<th>End Date</th>
+											<th>Renewals</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="prescriptionTableRow"
+											ng-repeat="p in prescriptions | orderBy: 'drug'"
+											prescriptionId={{p.id}}>
+											<td name="drugCell">{{p.drug.name}}</td>
+											<td name="codeCell">{{p.dosage}}</td>
+											<td name="typeCell">{{convertTypeName[p.type]}}</td>
+											<td name="pharmacyCell">{{p.pharmacyName}}</td>
+											<td name="startCell">{{p.startDate | date :
+												'MM/dd/yyyy'}}</td>
+											<td name="endCell">{{p.endDate | date : 'MM/dd/yyyy'}}</td>
+											<td name="renewalsCell">{{p.renewals}}</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>

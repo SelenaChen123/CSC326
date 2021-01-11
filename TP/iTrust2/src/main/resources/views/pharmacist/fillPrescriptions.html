@@ -1,0 +1,149 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Fill Prescriptions</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+
+
+	<div th:fragment="content">
+		<script th:inline="javascript">
+	    /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+	    /*<![CDATA[*/
+	    var app = angular.module("fillPrescriptionsApp", []);
+	    app.controller("fillPrescriptionsCtrl", function($scope, $http) {
+			$scope.pharmacistAssigned = true;
+			
+			function reset() {
+				$http.get("/iTrust2/api/v1/curPharmacist").then(function(response) {
+					var pharmacist = response.data;
+					console.log(pharmacist);
+					if (pharmacist.pharmacyId === undefined) {
+						$scope.pharmacistAssigned = false;
+					} else {
+						$http.get("/iTrust2/api/v1/unfilledPrescriptions/" + pharmacist.pharmacyId).then(function(pharmacyResponse) {
+							var humanize = {"GENERIC": "Generic", "BRAND_NAME": "Brand Name"};
+							$scope.prescriptions = pharmacyResponse.data;
+							for (var i = 0; i < $scope.prescriptions.length; i++) {
+								$scope.prescriptions[i].type = humanize[$scope.prescriptions[i].type];
+							}
+							$scope.selectedPrescription = null;
+							$scope.requestedTypeAvailable = undefined;
+							$scope.alternateTypeAvailable = undefined;
+						});
+					}
+				});
+			}
+			reset();
+			
+			$scope.selectedPrescription = null;
+			
+			$scope.selectPrescription = function(prescription) {
+				$scope.selectedPrescription = prescription;
+				$scope.requestedType = prescription.type;
+				$scope.alternateType = prescription.type == "Brand Name" ? "Generic" : "Brand Name";
+				$scope.displaySuccess = false;
+				$scope.displayError = false;
+			}
+			
+			$scope.colorButton = function(prescription) {
+				if (prescription === $scope.selectedPrescription) {
+					return {"background-color": "green", "color": "white"};
+				}
+				return {"background-color": "#f5f5f5", "color": "black"};
+			}
+			
+			$scope.validAvailability = function() {
+				if ($scope.requestedTypeAvailable === undefined) {
+					return false;
+				}
+				if ($scope.requestedTypeAvailable === false && $scope.alternateTypeAvailable === undefined) {
+					return false;
+				}
+				return true;
+			}
+			
+			
+			$scope.submit = function() {
+				if ($scope.selectedPrescription != null) {
+					var type = null;
+					if ($scope.requestedTypeAvailable === true) {
+						type = $scope.requestedType;
+					} else if ($scope.alternateTypeAvailable === true) {
+						type = $scope.alternateType;
+					} else {
+						type = "unavailable";
+					}
+					
+					$http.post("/iTrust2/api/v1/fillPrescription/" + $scope.selectedPrescription.id, type).then(
+			    		function(response) {
+			    		    $scope.displaySuccess = true;
+			    		    $scope.displayFailure = false;
+			    		    reset();
+			    		}, function(rejection) {
+			    		    $scope.displayFailure = true;
+			    		    $scope.displaySuccess = false;
+			    		    reset();
+			    		});
+				}
+			}
+			
+			
+	    	});
+	    /*]]>*/
+		</script>
+		<div ng-app="fillPrescriptionsApp" ng-controller="fillPrescriptionsCtrl">
+			<div
+				style="float: left; width: 80%; border-left: 1px solid #bbb; padding-left: 3%; height: 100%; overflow-y: auto">
+				<h2 id="header0">Fill Prescriptions</h2>
+				
+				<p ng-if="!pharmacistAssigned">You have not been yet assigned to a pharmacy.</p>
+				<p ng-if="pharmacistAssigned && prescriptions.length == 0">There are no prescriptions to be filled.</p>
+				<div ng-if="pharmacistAssigned && prescriptions.length != 0">
+					<table class="table table-bordered">
+						<tr>
+							<th>Drug</th>
+							<th>Dosage (mg)</th>
+							<th>Desired Type</th>
+							<th>Start Date</th>
+							<th>End Date</th>
+							<th>Renewals</th>
+							<th>Select</th>
+						</tr>
+						<tr ng-repeat="presc in prescriptions">
+							<td>{{presc.drug.name}}</td>
+							<td>{{presc.dosage}}</td>
+							<td>{{presc.type}}</td>
+							<td>{{presc.startDate}}</td>
+							<td>{{presc.endDate}}</td>
+							<td>{{presc.renewals}}</td>
+							<td><button ng-click="selectPrescription(presc)" ng-style="colorButton(presc)"
+										class="btn" name="select-{{presc.drug.name}}">Select</button></td>
+						</tr>
+					</table>
+					
+					<div ng-if="selectedPrescription != null">
+						<p>Is there {{requestedType}} {{selectedPrescription.drug.name}} available?</p>
+						<label><input type="radio" ng-model="$parent.$parent.requestedTypeAvailable" id="requestedAvailableYes" name="requestedAvail" ng-value="true">Yes</label>
+						<br />
+						<label><input type="radio" ng-model="$parent.$parent.requestedTypeAvailable" id="requestedAvailableNo" name="requestedAvail" ng-value="false">No</label>
+					</div>
+					<div ng-if="requestedTypeAvailable === false">
+						<p>Is there {{alternateType}} {{selectedPrescription.drug.name}} available?</p>
+						<label><input type="radio" ng-model="$parent.$parent.alternateTypeAvailable" id="alternateAvailableYes" name="alternateAvailable" ng-value="true">Yes</label>
+						<br />
+						<label><input type="radio" ng-model="$parent.$parent.alternateTypeAvailable" id="alternateAvailableNo" name="alternateAvailable" ng-value="false">No</label>
+					</div>
+					
+	
+					<br />
+					<button ng-click="submit()" ng-disabled="!validAvailability()" class="btn" name="submit">Submit</button>
+				</div>
+				
+				<div ng-show="displaySuccess === true" name="success" style="color: green;">The prescription has been filled</div>
+				<div ng-show="displayFailure === true" name="failure" style="color: red;">The prescription is unable to be filled</div>
+			</div>
+		</div>
+
+	</div>
+</body>
+</html>

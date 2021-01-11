@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <zoom_level>6</zoom_level>
+  <element>
+    <id>UMLPackage</id>
+    <coordinates>
+      <x>0</x>
+      <y>150</y>
+      <w>300</w>
+      <h>480</h>
+    </coordinates>
+    <panel_attributes>edu.ncsu.csc.itrust2.models.enums
+--
+bg=orange
+group=2
+layer=-3</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>120</x>
+      <y>246</y>
+      <w>162</w>
+      <h>174</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;enumeration&gt;&gt;
+*Role*
+edu.ncsu.csc.itrust2.models.enums
+--
+ROLE_PATIENT ( 1, "patient/index" )
+ROLE_HCP( 2, "hcp/index" )
+ROLE_ADMIN( 3, "admin/index" )
+ROLE_ER( 4, "er/index" )
+ROLE_LABTECH( 5, "labtech/index" )
+ROLE_OD( 6, "hcp/index" )
+ROLE_OPH( 7, "hcp/index" )
+ROLE_VIROLOGIST( 8, "hcp/index" )
+*ROLE_PHARMACIST( 9, "pharmacist/index" )*
+-code: int
+-landingPage: String
+--
+-Role(code: int, landingPage: String)
++getCode(): int
++getLanding(): String
+group=2
+layer=-3</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>588</x>
+      <y>210</y>
+      <w>108</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0;160.0;60.0;160.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLPackage</id>
+    <coordinates>
+      <x>852</x>
+      <y>258</y>
+      <w>144</w>
+      <h>342</h>
+    </coordinates>
+    <panel_attributes>edu.ncsu.csc.itrust2.forms.admin
+--
+bg=#2020FF</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>858</x>
+      <y>282</y>
+      <w>132</w>
+      <h>96</h>
+    </coordinates>
+    <panel_attributes>*PharmacyForm*
+edu.ncsu.csc.itrust2.forms.admin
+--
+-name: String
+-address: String
+-zip: String
+-state: String
+--
+PharmacyForm()
+PharmacyForm(p: Pharmacy)
+...
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>684</x>
+      <y>372</y>
+      <w>240</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>380.0;10.0;380.0;80.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>330</x>
+      <y>228</y>
+      <w>126</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>*Pharmacist*
+edu.ncsu.csc.itrust2.models.persistent
+--
+-self: User
+-firstName: String
+-lastName: String
+-address1: String
+-address2: String
+-city: String
+-state: State
+-zip: String
+-phone: String
+-email: String
+-id: Long
+-pharmacyId: String
+--
+...
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>636</x>
+      <y>252</y>
+      <w>192</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>*Patient*
+edu.ncsu.csc.itrust2.models.persistent
+--
+...
+-defaultPharmacy: Pharmacy
+-defaultPrescriptionType: PrescriptionType
+--
+...</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>534</x>
+      <y>186</y>
+      <w>162</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>*/DomainObject&lt;T&gt;/*
+edu.ncsu.csc.itrust2.models.persistent
+--
+--</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>474</x>
+      <y>366</y>
+      <w>216</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>*Pharmacy*
+edu.ncsu.csc.itrust2.models.persistent
+--
+
+--
++Pharmacy()
++Pharmacy(pf: PharmacyForm)
++Pharmacy(name: String, address: String, zip: String, state: State)
++getId(): String
++toString(): String
+_+getWhere(where: List&lt;Criterion&gt;): List&lt;Pharmacy&gt;_
+_+getByName(name: String): Pharmacy_
+_+getPharmacies(): List&lt;Pharmacy&gt;_</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLPackage</id>
+    <coordinates>
+      <x>312</x>
+      <y>162</y>
+      <w>528</w>
+      <h>450</h>
+    </coordinates>
+    <panel_attributes>edu.ncsu.csc.itrust2.models.persistent
+--
+bg=#20FF20
+layer=-1</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>114</x>
+      <y>186</y>
+      <w>84</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;enumeration&gt;&gt;
+*PrescriptionType*
+--
+GENERIC = 1
+BRAND = 2
+--
+layer=1</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>468</x>
+      <y>246</y>
+      <w>162</w>
+      <h>96</h>
+    </coordinates>
+    <panel_attributes>*Prescription*
+edu.ncsu.csc.itrust2.models.persistent
+--
+...
+-type: PrescriptionType
+-pharmacyName: String
+-filled: boolean
+-pickedUp: boolean
+--
+...
++getType(): PrescriptionType
++setType(type: PrescriptionType): void
++setFilled(boolean): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>810</x>
+      <y>42</y>
+      <w>216</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>*APIPharmacyController*
+edu.ncsu.csc.itrust2.controllers.api
+--
+--
+_+getPharmacies(): List&lt;Pharmacy&gt;_
+_+getPharamacy(id: String): ResponseEntity_
+_+createPharmacy(pf: PharmacyForm): ResponseEntity_
+_+updatePharmacy(id: String, pf: PharmacyForm): ResponseEntity_
+_+deletePharmacy(id: String): ResponseEntity_</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>858</x>
+      <y>522</y>
+      <w>132</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>*PatientForm*
+edu.ncsu.csc.itrust2.forms.admin
+--
+...
+-defaultPharmacy: String
+-defaultPrescriptionType: String
+--
+...</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>858</x>
+      <y>432</y>
+      <w>132</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>*PrescriptionForm*
+edu.ncsu.csc.itrust2.forms.admin
+--
+...
+-prescriptionType: String
+-pharmacy: String
+--
+...</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>450</x>
+      <y>210</y>
+      <w>114</w>
+      <h>42</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>170.0;10.0;170.0;50.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>600</x>
+      <y>210</y>
+      <w>42</w>
+      <h>168</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0;50.0;30.0;50.0;260.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>528</x>
+      <y>210</y>
+      <w>66</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>90.0;10.0;90.0;40.0;10.0;40.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>936</x>
+      <y>114</y>
+      <w>18</w>
+      <h>156</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;240.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>684</x>
+      <y>312</y>
+      <w>84</w>
+      <h>102</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;150.0;120.0;150.0;120.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>534</x>
+      <y>336</y>
+      <w>18</w>
+      <h>42</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>174</x>
+      <y>144</y>
+      <w>570</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;70.0;10.0;10.0;930.0;10.0;930.0;180.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>192</x>
+      <y>204</y>
+      <w>318</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;510.0;10.0;510.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>450</x>
+      <y>342</y>
+      <w>66</w>
+      <h>36</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>90.0;40.0;90.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLPackage</id>
+    <coordinates>
+      <x>210</x>
+      <y>0</y>
+      <w>822</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>edu.ncsu.csc.itrust2.controllers.api
+--
+bg=yellow</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>6</x>
+      <y>426</y>
+      <w>288</w>
+      <h>198</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;enumeration&gt;&gt;
+*TransactionType*
+edu.ncsu.csc.itrust2.models.enums
+--
+...
+CREATE_PHARMACY( 505, "New pharmacy created", false )
+VIEW_PHARMACY( 506, "Pharmacy viewed", false )
+EDIT_PHARMACY( 507, "Pharmacy edited", false )
+DELETE_PHARMACY( 508, "Pharmacy deleted", false )
+ASSIGN_PHARMACIST( 509, "Pharmacist assigned to pharmacy", false )
+REASSIGN_PHARMACIST( 510, "Pharmacist assigned to different pharmacy", false )
+PRESC_AVAILABLE_EMAIL( 1405, "Prescription Available Email notification sent", true)
+PHARMACIST_PRESCRIPTION_VIEW( 3101, "Pharmacist viewed list of prescriptions, false)
+PRESCRIPTION_FILLED( 3102, "Prescription filled by pharmacist", true)
+PRESCRIPTION_PICKED_UP( 3103, "Prescription picked up by patient", true)
+CREATE_DEFAULT_PRESC( 3201, "Declare a default prescription type", true )
+CREATE_DEFAULT_PHARMA( 3202, "Declare a default pharmacy", true )
+UPDATE_DEFAULT_PRES( 3203, "Update default prescription type", true )
+UPDATE_DEFAULT_PHARMA( 3204, "Update default pharmacy", true )
+
+--
+...</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>456</x>
+      <y>510</y>
+      <w>168</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>/*Location*/
+edu.ncsu.csc.itrust2.models.persistent
+--
+-name: String
+-address: String
+-state: State
+-zip: String
+--
++Location()
+...</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>666</x>
+      <y>522</y>
+      <w>162</w>
+      <h>42</h>
+    </coordinates>
+    <panel_attributes>*Hospital*
+edu.ncsu.csc.itrust2.models.persistent
+--
+--
+...
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>558</x>
+      <y>480</y>
+      <w>18</w>
+      <h>42</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;50.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>618</x>
+      <y>534</y>
+      <w>60</w>
+      <h>18</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;80.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>552</x>
+      <y>18</y>
+      <w>246</w>
+      <h>102</h>
+    </coordinates>
+    <panel_attributes>*APIPharmacistController*
+edu.ncsu.csc.itrust2.controllers.api
+--
+--
+_+getPharmacists(): List&lt;Pharmacist&gt;_
+_+getPharamacist(id: String): ResponseEntity_
+_+getCurrentPharmacist(): ResponseEntity_
+_+createPharmacist(pf: PharmacistForm): ResponseEntity_
+_+updatePharmacist(id: String, pf: PharmacistForm): ResponseEntity_
+_+assignPharmacist(pharmacist: String, pharmacy: String): ResponseEntity_
+_+movePharmacist(pharmacist: String, pharmacy: String): ResponseEntity_
+layer=1</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>222</x>
+      <y>18</y>
+      <w>324</w>
+      <h>102</h>
+    </coordinates>
+    <panel_attributes>*APIPrescriptionController*
+--
+--
++addPrescription(form: PrescriptionForm): ResponseEntity
++editPrescription(form: PrescriptionForm): ResponseEntity
++deletePrescription(id: Long): ResponseEntity
++getPrescriptions(): List&lt;Prescription&gt;
++getUnfilledPrescriptions(id: String): List&lt;Prescription&gt;
++getFilledPrescriptions(id: String): List&lt;Prescription&gt;
++getPrescription(id: Long): ResponseEntity
++fillPrescription(id: Long, type: String): ResponseEntity
+--
+
+layer=1</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>390</x>
+      <y>114</y>
+      <w>264</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>420.0;10.0;420.0;110.0;10.0;110.0;10.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>300</x>
+      <y>114</y>
+      <w>228</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;140.0;360.0;140.0;360.0;220.0</additional_attributes>
+  </element>
+</diagram>

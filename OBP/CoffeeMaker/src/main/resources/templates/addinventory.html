@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>CoffeeMaker - Add Inventory</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" href="css/bootstrap.css" />
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+	<script
+		src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+	<script>
+		var app = angular.module('myApp', []);
+
+		app.controller('addInventoryCtrl', function($scope, $http, $q) {
+			$scope.reset = function() {
+				$scope.inventory = {
+					ingredients : []
+				};
+
+				if (undefined != $scope.addInventoryForm) {
+					$scope.addInventoryForm.$setPristine(); // reset Form
+				}
+			}
+
+			$scope.submit = function() {
+				scope.reset();
+			}
+
+			$scope.reset();
+		});
+	</script>
+	<div ng-app="myApp" class="generic-container ng-cloak"
+		ng-controller="addRInventoryCtrl as ctrl">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<span class="lead">Add Inventory</span>
+			</div>
+
+			<div class="formcontainer">
+				<form>
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Coffee</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Coffee"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Milk</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Milk"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Sugar</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Sugar"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Chocolate</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Chocolate"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Chai</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Chai"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-group col-md-12">
+							<label class="col-md-2 control-lable" for="file">Mocha</label>
+							<div class="col-md-7">
+								<input type="text" placeholder="Enter amount of Mocha"
+									required="0" class="form-control input-sm" />
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="form-actions floatRight">
+							<input type="submit" value="Submit"
+								class="btn btn-primary btn-sm"
+								ng-disabled="addIngredientForm.$invalid" />
+							<button type="button" ng-click="reset()"
+								class="btn btn-warning btn-sm"
+								ng-disabled="addIngredientForm.$pristine">Reset Form</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<a href="/index">Home</a>
+	</div>
+</body>
+</html>
